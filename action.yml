@@ -49,6 +49,10 @@ inputs:
 outputs:
   found:
     description: "Whether given image was found in ECR (true/false)"
+  registry:
+    description: "AWS ECR registry used to push the image"
+  image:
+    description: "Full name of image that is found/built"
 runs:
   using: "docker"
   image: "Dockerfile"

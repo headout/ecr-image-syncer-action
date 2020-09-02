@@ -11,7 +11,7 @@ awsEcrRegistry="$4"
 imageRepo="$5"
 imageTag="$6"
 preBuildCmd="$7"
-buildDockerfile="$8"
+buildDockerfile="${8:-Dockerfile}"
 buildDockerArgs="$9"
 buildCache="${10}"
 updateCache="${11:-false}"
@@ -60,7 +60,7 @@ aws sts get-caller-identity
 # config)ure docker login access to ECR registry
 cmdEcrLogin="aws ecr get-login --no-include-email" 
 if [[ -n "$awsEcrRegistry" ]]; then
-    cmdEcrLogin+="--registry-ids $awsEcrRegistry"
+    cmdEcrLogin+=" --registry-ids $awsEcrRegistry"
 fi
 dockerCreds="$($cmdEcrLogin)" || ( \
     error "The given user doesn't have access to ECR resource"; \
@@ -69,10 +69,14 @@ dockerCreds="$($cmdEcrLogin)" || ( \
 eval "$dockerCreds"
 awsEcrRegistry=${awsEcrRegistry:-$(aws ecr get-authorization-token | jq -r ".authorizationData[0].proxyEndpoint" | sed -e "s|^https\?://||")}
 info "Logged in to AWS registry, "$awsEcrRegistry", in docker"
+echo "::set-output name=registry::$awsEcrRegistry"
 
 find_image_in_ecr() {
     aws ecr describe-images --repository-name=$1 --image-ids=imageTag=$2
 }
+
+fullEcrImage="$awsEcrRegistry/$imageRepo:$imageTag"
+echo "::set-output name=image::$fullEcrImage"
 
 # found image => success exit
 if find_image_in_ecr $imageRepo $imageTag; then
@@ -91,7 +95,7 @@ fi
 
 # execute docker build (with optional caching)
 info "Building the docker image..."
-cmdBuild="docker build $buildDockerfile -t $imageRepo:$imageTag $buildDockerArgs"
+cmdBuild="docker build . -f $buildDockerfile -t $imageRepo:$imageTag $buildDockerArgs"
 if [[ -n "$buildCache" ]]; then
     cmdBuild+=" --cache-from=$buildCache"
 fi
@@ -99,8 +103,8 @@ eval $cmdBuild
 
 # push to AWS ECR registry
 info "Pushing the given image to ECR registry..."
-docker tag "$imageRepo:$imageTag" "$awsEcrRegistry/$imageRepo:$imageTag"
-docker push "$awsEcrRegistry/$imageRepo:$imageTag"
+docker tag "$imageRepo:$imageTag" "$fullEcrImage"
+docker push "$fullEcrImage"
 
 # update cache with new image
 if [[ "$updateCache" = true ]]; then
