@@ -28,10 +28,6 @@ run_validations() {
         error "Provide image repository and tag to build"
         return 2
     fi
-    if [[ -z "$buildDockerfile" ]]; then
-        error "Provide path to Dockerfile to build the image"
-        return 2
-    fi
     if [[ "$updateCache" = true ]]; then
         if [[ -z "$cacheRegistry" ]] || [[ -z "$cacheRegistryUsername" ]] || [[ -z "$cacheRegistryPassword" ]]; then
             error "Provide cache registry login credentials"

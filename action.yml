@@ -25,7 +25,8 @@ inputs:
     required: false
   dockerfile:
     description: "Path to Dockerfile to build"
-    required: true
+    required: false
+    default: "Dockerfile"
   docker-build-args:
     description: "Args to use for docker build"
     required: false
