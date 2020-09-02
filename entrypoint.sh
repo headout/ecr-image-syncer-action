@@ -69,26 +69,26 @@ dockerCreds="$($cmdEcrLogin)" || ( \
 eval "$dockerCreds"
 awsEcrRegistry=${awsEcrRegistry:-$(aws ecr get-authorization-token | jq -r ".authorizationData[0].proxyEndpoint" | sed -e "s|^https\?://||")}
 info "Logged in to AWS registry, "$awsEcrRegistry", in docker"
-echo "::set-output name=registry::$awsEcrRegistry"
+set_action_output registry "$awsEcrRegistry"
 
 find_image_in_ecr() {
     aws ecr describe-images --repository-name=$1 --image-ids=imageTag=$2
 }
 
 fullEcrImage="$awsEcrRegistry/$imageRepo:$imageTag"
-echo "::set-output name=image::$fullEcrImage"
+set_action_output image "$fullEcrImage"
 
 # found image => success exit
 if find_image_in_ecr $imageRepo $imageTag; then
     info "Found image $imageRepo:$imageTag in ECR"
-    echo "::set-output name=found::true"
+    set_action_output found "true"
     exit 0
 fi
 info "Didn't find given image, $imageRepo:$imageTag, in ECR; Will build anew and push the image."
-echo "::set-output name=found::false"
+set_action_output found "false"
 
 # run prebuild commands
-info "Running pre-built commands..." $([[ -z "$preBuildCmd" ]] && echo 'found none. SKIPPING')
+info "Running pre-built commands..." $([[ -n "$preBuildCmd" ]] && echo \'$preBuildCmd\' || echo 'found none. SKIPPING')
 if [[ -n "$preBuildCmd" ]]; then
     eval "$preBuildCmd"
 fi
@@ -99,6 +99,7 @@ cmdBuild="docker build . -f $buildDockerfile -t $imageRepo:$imageTag $buildDocke
 if [[ -n "$buildCache" ]]; then
     cmdBuild+=" --cache-from=$buildCache"
 fi
+info "Executing \'$cmdBuild\'..."
 eval $cmdBuild
 
 # push to AWS ECR registry

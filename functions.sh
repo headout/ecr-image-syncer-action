@@ -89,3 +89,15 @@ warn() {
 error() {
     log "${RED}ERROR${RESET} ==> ${*}"
 }
+
+########################
+# Print to STDOUT the Github Action's set output command 
+# Arguments:
+#   output name
+#   output value
+# Returns:
+#   None
+#########################
+set_action_output() {
+    echo "::set-output name=$1::$2"
+}
