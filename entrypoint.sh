@@ -97,6 +97,7 @@ fi
 info "Building the docker image..."
 cmdBuild="docker build . -f $buildDockerfile -t $imageRepo:$imageTag $buildDockerArgs"
 if [[ -n "$buildCache" ]]; then
+    docker login "$cacheRegistry" --username "$cacheRegistryUsername" --password "$cacheRegistryPassword"
     cmdBuild+=" --cache-from=$buildCache"
 fi
 info "Executing \'$cmdBuild\'..."
@@ -110,7 +111,6 @@ docker push "$fullEcrImage"
 # update cache with new image
 if [[ "$updateCache" = true ]]; then
     info "Updating the cache image with the built image..."
-    docker login "$cacheRegistry" --username "$cacheRegistryUsername" --password "$cacheRegistryPassword"
     docker tag "$imageRepo:$imageTag" "$buildCache"
     docker push "$buildCache"
 fi
