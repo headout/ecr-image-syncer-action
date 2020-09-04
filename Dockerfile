@@ -6,7 +6,7 @@ LABEL 'name'='ECR Image Syncer Action'
 LABEL 'maintainer'='Shivansh Saini <shivansh.saini@headout.com>'
 
 LABEL 'com.github.actions.name'='ECR Image Syncer Action'
-LABEL 'com.github.actions.description'=''
+LABEL 'com.github.actions.description'='Checks if the given image exists in ECR, and if not builds and pushes to ECR registry'
 LABEL 'com.github.actions.icon'='send'
 LABEL 'com.github.actions.color'='green'
 
